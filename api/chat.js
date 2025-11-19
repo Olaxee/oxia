@@ -15,10 +15,14 @@ export default async function handler(req, res) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: conversation.map(msg => ({
-            role: msg.role,
-            parts: [{ text: msg.content }]
-          }))
+          prompt: {
+            messages: conversation.map(msg => ({
+              author: msg.role === "user" ? "user" : "system", // ou "assistant"
+              content: [{ type: "text", text: msg.content }]
+            }))
+          },
+          temperature: 0.7,
+          maxOutputTokens: 1024
         })
       }
     );
@@ -26,7 +30,7 @@ export default async function handler(req, res) {
     const data = await result.json();
     console.log("Réponse API Gemini =", data);
 
-    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const aiText = data?.candidates?.[0]?.content?.[0]?.text;
     if (!aiText) return res.status(500).json({ reply: "Erreur : aucune réponse de l’IA" });
 
     res.status(200).json({ reply: aiText });
