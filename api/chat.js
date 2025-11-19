@@ -1,4 +1,3 @@
-// api/chat.js
 let conversation = [];
 
 export default async function handler(req, res) {
@@ -19,9 +18,7 @@ export default async function handler(req, res) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: {
-            messages: lastMessages
-          },
+          prompt: { messages: lastMessages },
           temperature: 0.7,
           candidate_count: 1,
           max_output_tokens: 1024
