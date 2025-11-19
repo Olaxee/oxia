@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chat IA</title>
-
+<title>Chat IA avec mémoire</title>
 <style>
   body {
     margin: 0;
@@ -117,8 +116,6 @@
   const userInput = document.getElementById("userInput");
   const sendBtn = document.getElementById("sendBtn");
 
-  let conversationHistory = []; // <-- Stocke tous les messages
-
   function addMessage(text, sender) {
     const div = document.createElement("div");
     div.classList.add("message", sender);
@@ -132,21 +129,20 @@
     if (!text) return;
 
     addMessage(text, "user");
-    conversationHistory.push({ role: "user", text }); // ajoute à l'historique
     userInput.value = "";
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversation: conversationHistory })
+        body: JSON.stringify({ message: text })
       });
 
       const data = await res.json();
       addMessage(data.reply, "ai");
-      conversationHistory.push({ role: "ai", text: data.reply }); // ajoute la réponse à l'historique
     } catch (err) {
       addMessage("Erreur serveur.", "ai");
+      console.error(err);
     }
   }
 
