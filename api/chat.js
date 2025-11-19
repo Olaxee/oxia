@@ -1,5 +1,5 @@
 // api/chat.js
-let conversation = []; // Stockage temporaire de la conversation en mémoire
+let conversation = [];
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -9,40 +9,35 @@ export default async function handler(req, res) {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "Message manquant" });
 
-  // Ajouter le message utilisateur à la conversation
-  conversation.push({ role: "user", text: message });
-
-  // Limiter la mémoire aux 20 derniers messages pour éviter trop de tokens
+  conversation.push({ role: "user", content: message });
   const lastMessages = conversation.slice(-20);
 
-  // Transformer en format attendu par Gemini
-  const contents = lastMessages.map(msg => ({
-    role: msg.role === "user" ? "user" : "assistant",
-    parts: [{ text: msg.text }]
-  }));
-
   try {
-    const result = await fetch(
+    const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + process.env.GOOGLE_API_KEY,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents })
+        body: JSON.stringify({
+          prompt: {
+            messages: lastMessages
+          },
+          temperature: 0.7,
+          candidate_count: 1,
+          max_output_tokens: 1024
+        })
       }
     );
 
-    const data = await result.json();
+    const data = await response.json();
 
-    if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+    if (!data?.candidates?.[0]?.content) {
       console.log("Réponse brute Gemini :", data);
       return res.status(500).json({ reply: "Erreur : aucune réponse de l’IA" });
     }
 
-    // Récupérer la réponse de l'IA
-    const aiReply = data.candidates[0].content.parts[0].text;
-
-    // Ajouter la réponse de l'IA à la conversation
-    conversation.push({ role: "assistant", text: aiReply });
+    const aiReply = data.candidates[0].content[0].text || "…";
+    conversation.push({ role: "assistant", content: aiReply });
 
     res.status(200).json({ reply: aiReply });
 
