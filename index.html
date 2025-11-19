@@ -14,8 +14,8 @@ body {
   align-items: center;
   background-color: #2c2c2c;
   font-family: sans-serif;
-  overflow: hidden;
 }
+
 .chat-area {
   width: 640px;
   max-width: 90%;
@@ -26,6 +26,7 @@ body {
   padding: 10px;
   box-sizing: border-box;
 }
+
 .message.user {
   align-self: flex-end;
   background-color: #3a3a3a;
@@ -36,6 +37,7 @@ body {
   max-width: 70%;
   word-wrap: break-word;
 }
+
 .message.ai {
   align-self: flex-start;
   background-color: transparent;
@@ -47,6 +49,7 @@ body {
   word-wrap: break-word;
   border: 1px solid #555;
 }
+
 .bottom-bar {
   width: 640px;
   height: 56px;
@@ -55,9 +58,10 @@ body {
   display: flex;
   align-items: center;
   margin-bottom: 20px;
-  box-sizing: border-box;
   padding: 0 10px;
+  box-sizing: border-box;
 }
+
 .input-area {
   flex: 1;
   height: 100%;
@@ -69,6 +73,7 @@ body {
   outline: none;
   caret-color: white;
 }
+
 .white-circle {
   width: 36px;
   height: 36px;
@@ -81,13 +86,21 @@ body {
   cursor: pointer;
   transition: transform 0.3s ease;
 }
+
 .white-circle:hover { transform: scale(1.3); }
 .white-circle:active { transform: scale(1); transition: 0.1s; }
-.white-circle svg { width: 20px; height: 20px; fill: black; }
+
+.white-circle svg {
+  width: 20px;
+  height: 20px;
+  fill: black;
+}
 </style>
 </head>
 <body>
+
 <div class="chat-area" id="chatArea"></div>
+
 <div class="bottom-bar">
   <input type="text" class="input-area" id="userInput" placeholder="Tapez un message..." />
   <div class="white-circle" id="sendBtn">
@@ -96,13 +109,15 @@ body {
     </svg>
   </div>
 </div>
+
 <script>
 const chatArea = document.getElementById("chatArea");
 const userInput = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
+
 let conversation = [];
 
-function addMessage(text, sender) {
+function addMessage(text, sender){
   const div = document.createElement("div");
   div.classList.add("message", sender);
   div.textContent = text;
@@ -112,32 +127,46 @@ function addMessage(text, sender) {
 
 async function sendMessage() {
   const text = userInput.value.trim();
-  if (!text) return;
+  if(!text) return;
   addMessage(text, "user");
   conversation.push({ role: "user", content: text });
   userInput.value = "";
 
-  try {
+  try{
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ conversation })
     });
+
     const data = await res.json();
-    if (data.reply) {
+    if(data.reply){
       addMessage(data.reply, "ai");
       conversation.push({ role: "ai", content: data.reply });
     } else {
       addMessage("Erreur : aucune réponse de l’IA", "ai");
     }
-  } catch (err) {
+  } catch(err){
     console.error(err);
     addMessage("Erreur serveur.", "ai");
   }
 }
 
 sendBtn.onclick = sendMessage;
-userInput.onkeydown = (e) => { if (e.key === "Enter") sendMessage(); };
+userInput.onkeydown = (e)=>{if(e.key==="Enter") sendMessage();};
+
+// Envoi d'un message initial pour "forcer" la première réponse
+(async ()=>{
+  conversation.push({role:"user", content:"Bonjour"});
+  const res = await fetch("/api/chat", {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({conversation})
+  });
+  const data = await res.json();
+  if(data.reply){ addMessage(data.reply, "ai"); conversation.push({role:"ai", content:data.reply}); }
+})();
 </script>
+
 </body>
 </html>
