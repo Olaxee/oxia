@@ -30,7 +30,8 @@ export default async function handler(req, res) {
     const data = await result.json();
     console.log("Réponse API Gemini =", data);
 
-    const aiText = data?.candidates?.[0]?.content?.[0]?.text;
+    // ✅ Nouveau chemin correct pour Gemini v2.5
+    const aiText = data?.output?.[0]?.content?.[0]?.text;
     if (!aiText) return res.status(500).json({ reply: "Erreur : aucune réponse de l’IA" });
 
     res.status(200).json({ reply: aiText });
